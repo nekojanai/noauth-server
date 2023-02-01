@@ -2,13 +2,20 @@ import morgan from "morgan";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { baseRouter } from "./api/v1/routes/base.router.js";
+import { baseRouter } from "./routes/base.router.js";
 import { loadEnvVars } from "./config/env.js";
 import { checkForDBEnvVars, db } from "./config/db.js";
+import { initiateKeyPair } from "./config/keypair.js";
+import { oauthRouter } from "./routes/oauth.router.js";
+import { engine } from 'express-handlebars'
 
 loadEnvVars();
 
 const app: Application = express();
+
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+app.set('views', 'src/views');
 
 const ENVIRONMENT = process.env.NODE_ENV || "development";
 const DOMAIN = process.env.DOMAIN || "localhost";
@@ -25,12 +32,17 @@ switch (ENVIRONMENT) {
 }
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
 
-app.use("/api/v1", baseRouter);
+app.use("/", baseRouter);
+app.use("/oauth", oauthRouter);
+
+app.use(express.static('src/static'));
+
 
 checkForDBEnvVars();
-db(false).initialize();
+// db(false).initialize();
+export const keyPair = await initiateKeyPair(process.env.PRIVATE_KEY_PASSPHRASE);
+
 
 app.listen(PORT, () => {
   console.log(`SubAbu API started at http://${DOMAIN}:${PORT}`);

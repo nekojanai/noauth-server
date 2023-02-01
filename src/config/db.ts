@@ -1,5 +1,4 @@
 import { DataSource } from "typeorm";
-import { User } from "../models/user.js";
 
 export function checkForDBEnvVars() {
   if (
@@ -17,7 +16,7 @@ export function checkForDBEnvVars() {
   }
 }
 
-const ENTITIES = [User];
+const ENTITIES = ["src/models/*.model.ts"];
 
 export function db(logging: boolean) {
   return new DataSource({

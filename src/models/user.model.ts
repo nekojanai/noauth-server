@@ -5,9 +5,13 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import type { Relation } from "typeorm";
+import { hashPassword, verifyPassword } from "../utils/crypto.js";
+import { OauthToken } from "./oauth_token.model.js";
 
 @Entity()
 export class User extends BaseEntity {
@@ -34,10 +38,27 @@ export class User extends BaseEntity {
   @Column()
   admin: boolean = false;
 
+  @Column()
+  password: string;
+
+  @OneToMany(() => OauthToken, token => token.resource_owner)
+  tokens: Relation<OauthToken[]>;
+
   @BeforeInsert()
   private setUsername() {
     if (!this.username) {
       this.username = this.preferedUsername.replace(/[\W]/g, '').toLowerCase();
     }
+  }
+
+  @BeforeInsert()
+  private async createPasswordHash() {
+    if (this.password) {
+      this.password = await hashPassword(this.password);
+    }
+  }
+
+  async verifyPassword(password: string): Promise<boolean> {
+    return await verifyPassword(password, this.password);
   }
 }
