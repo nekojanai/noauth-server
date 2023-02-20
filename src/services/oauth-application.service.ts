@@ -1,5 +1,4 @@
 import { OauthApplication } from "../models/oauth_application.model.js";
-import { scopesMatch } from "./oauth-scopes.js";
 
 /**
  * redirect_uris: either one url (despite it's name) or the string 'urn:ietf:wg:oauth:2.0:oob'

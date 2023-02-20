@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import formidable from "formidable";
 import { OauthApplication } from "../models/oauth_application.model.js";
 import { createOauthApplication, OauthApplicationParams } from "../services/oauth-application.service.js";
 

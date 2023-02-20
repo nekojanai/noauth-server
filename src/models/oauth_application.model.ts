@@ -4,6 +4,7 @@ import { generateToken } from "../utils/crypto.js";
 import { OauthToken } from "./oauth_token.model.js";
 import { scopesMatch } from "../services/oauth-scopes.js";
 import { User } from "./user.model.js";
+import { OauthAccessGrant } from "./oauth_access_grant.model.js";
 
 @Entity()
 export class OauthApplication extends BaseEntity {
@@ -37,6 +38,32 @@ export class OauthApplication extends BaseEntity {
 
   @OneToMany(() => OauthToken, token => token.application)
   tokens: Relation<OauthToken[]>;
+
+  @OneToMany(() => OauthAccessGrant, access_grant => access_grant.application)
+  access_grants: Relation<OauthAccessGrant[]>;
+
+  async createAccessGrant(scope: string, redirectUri: string, resourceOwner: User): Promise<OauthAccessGrant> {
+
+    if (scopesMatch(this.scopes, scope) === false) {
+      throw new Error('Requested scope is not allowed');
+    }
+
+    if (!resourceOwner) {
+      throw new Error('Resource owner is required');
+    }
+
+    if (redirectUri !== this.redirect_uri) {
+      throw new Error('Redirect uri does not match');
+    }
+
+    const accessGrant = OauthAccessGrant.create();
+    accessGrant.resource_owner = resourceOwner;
+    accessGrant.application = this;
+    accessGrant.redirect_uri = this.redirect_uri;
+    accessGrant.scopes = scope;
+    const savedAccessGrant = await accessGrant.save();
+    return savedAccessGrant;
+  }
 
   async createToken(scope: string, resourceOwner?: User): Promise<OauthToken> {
 

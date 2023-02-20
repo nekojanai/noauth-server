@@ -1,0 +1,13 @@
+<h1>Authorization Form</h1>
+<form action="/oauth/authorize" method="post" class="auth-form">
+  <input type="hidden" name="csrf_token" value="{{csrf}}">
+  <input type="hidden" name="client_id" value="{{queryParams.client_id}}">
+  <input type="hidden" name="response_type" value="{{queryParams.response_type}}">
+  <input type="hidden" name="redirect_uri" value="{{queryPrams.redirect_uri}}">
+  <input type="hidden" name="scope" value="{{queryParams.scope}}">
+  <label for="username">Username:</label>
+  <input type="text" name="username" id="username">
+  <label for="password">Password:</label>
+  <input type="password" name="password" id="password">
+  <input type="submit" value="Login">
+</form>
