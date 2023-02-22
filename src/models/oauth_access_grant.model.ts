@@ -35,7 +35,7 @@ export class OauthAccessGrant extends BaseEntity {
   scopes: string = 'read';
 
   @BeforeInsert()
-  private generateGrantToken() {
+  private genToken() {
     this.token = generateToken();
   }
 }

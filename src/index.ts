@@ -6,7 +6,6 @@ import { baseRouter } from "./routes/base.router.js";
 import { loadEnvVars } from "./config/env.js";
 import { checkForDBEnvVars, db } from "./config/db.js";
 import { initiateKeyPair } from "./config/keypair.js";
-import { oauthRouter } from "./routes/oauth.router.js";
 import { engine } from 'express-handlebars'
 import { rotateSecret, RotatingSecret } from "./utils/crypto.js";
 
@@ -31,8 +30,11 @@ switch (ENVIRONMENT) {
   default:
     break;
 }
+
 app.use(helmet());
 app.use(cors());
+app.use("/", baseRouter);
+app.use(express.static('src/static'));
 
 checkForDBEnvVars();
 db(false).initialize();
@@ -43,10 +45,7 @@ export function appRotateSecret() {
   return rotatedSecret.secret;
 }
 
-app.use("/", baseRouter);
-app.use("/oauth", oauthRouter);
 
-app.use(express.static('src/static'));
 
 
 app.listen(PORT, () => {

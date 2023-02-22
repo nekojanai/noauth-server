@@ -39,3 +39,22 @@ export function parseNewAuthorizationParams(params: any): NewAuthorizationParams
   }
   return params;
 }
+
+export interface RevokeTokenParams {
+  client_id: string;
+  client_secret: string;
+  token: string;
+}
+
+export function parseRevokeTokenParams(params: any): RevokeTokenParams {
+  if (!params.client_id) {
+    throw new Error('Missing client_id');
+  }
+  if (!params.client_secret) {
+    throw new Error('Missing client_secret');
+  }
+  if (!params.token) {
+    throw new Error('Missing token');
+  }
+  return params;
+}

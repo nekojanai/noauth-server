@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { AuthorizationParams, parseNewAuthorizationParams, parseShowAuthorizationParams } from "../helpers/oauth.helper.js";
+import { AuthorizationParams, parseNewAuthorizationParams, parseRevokeTokenParams, parseShowAuthorizationParams } from "../helpers/oauth.helper.js";
 import { appRotateSecret, keyPair } from "../index.js";
 import { OauthAccessGrant } from "../models/oauth_access_grant.model.js";
 import { OauthApplication } from "../models/oauth_application.model.js";
+import { OauthToken } from "../models/oauth_token.model.js";
 import { User } from "../models/user.model.js";
 import { OauthTokenParams } from "../services/oauth-application.service.js";
 import { createJWT } from "../utils/crypto.js";
@@ -113,6 +114,39 @@ export async function newAuthorizationHandler(req: Request, res: Response): Prom
   } catch (e) {
     res.status(400).json({
       error: "invalid_grant"
+    });
+  }
+}
+
+export async function revokeTokenHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const params = parseRevokeTokenParams(req.body.fields);
+
+    const oauthToken = await OauthToken.findOne({
+      where: {
+        token: params.token
+      }
+    });
+
+    if (!oauthToken) {
+      throw new Error('invalid token');
+    }
+
+    const application = oauthToken.application;
+
+    if (application.uid !== params.client_id) {
+      throw new Error('invalid client_id');
+    }
+
+    if (application.secret !== params.client_secret) {
+      throw new Error('invalid client_secret');
+    }
+
+    await oauthToken.softRemove();
+    res.status(200).json({});
+  } catch (e) {
+    res.status(403).json({
+      error: 'unauthorized_client'
     });
   }
 }
