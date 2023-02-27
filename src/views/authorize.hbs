@@ -1,10 +1,18 @@
 <h1>Authorization Form</h1>
 <form action="/oauth/authorize" method="post" class="auth-form">
-  <input type="hidden" name="csrf_token" value="{{csrf}}">
   <input type="hidden" name="client_id" value="{{queryParams.client_id}}">
   <input type="hidden" name="response_type" value="{{queryParams.response_type}}">
   <input type="hidden" name="redirect_uri" value="{{queryPrams.redirect_uri}}">
   <input type="hidden" name="scope" value="{{queryParams.scope}}">
+  {{ #if queryParams.state }}
+    <input type="hidden" name="state" value="{{queryParams.state}}">
+  {{ /if }}
+  {{ #if queryParams.code_challenge }}
+    <input type="hidden" name="code_challenge" value="{{queryParams.code_challenge}}">
+    {{ #if queryParams.code_challenge_method }}
+      <input type="hidden" name="code_challenge_method" value="{{queryParams.code_challenge_method}}">
+    {{ /if }}
+  {{ /if }}
   <label for="username">Username:</label>
   <input type="text" name="username" id="username">
   <label for="password">Password:</label>

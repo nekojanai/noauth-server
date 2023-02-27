@@ -7,7 +7,6 @@ import {
 } from '../helpers/oauth/grant-flows.helper.js';
 import {
   AuthorizationParams,
-  IntrospectTokenParams,
   parseIntrospectTokenParams,
   parseNewAuthorizationParams,
   parseNewOauthTokenParams,
@@ -18,7 +17,8 @@ import { appKeyPair, appRotateSecret } from '../index.js';
 import { OauthApplication } from '../models/oauth-application.model.js';
 import { OauthToken } from '../models/oauth-token.model.js';
 import { User } from '../models/user.model.js';
-import { decryptJWT } from '../utils/crypto.js';
+import { decryptJWT, encryptJWT } from '../utils/crypto.js';
+import { OAUTH_NATIVE_REDIRECT_URI } from '../utils/oauth/redirect-uri.js';
 
 export async function newTokenHandler(
   req: Request,
@@ -54,8 +54,8 @@ export function showAuthorizeHandler(req: Request, res: Response): void {
   let queryParams: AuthorizationParams;
   try {
     queryParams = parseShowAuthorizationParams(req.query);
-    const csrf = appRotateSecret();
-    res.render('authorize', { title: 'Auth', csrf, queryParams });
+    // const csrf = appRotateSecret();
+    res.render('authorize', { title: 'Auth', queryParams });
   } catch (e) {
     res.status(422).json({
       error: e.message,
@@ -92,18 +92,40 @@ export async function newAuthorizationHandler(
       throw new Error('invalid password');
     }
 
-    const access_grant = await oauthApplication.createAccessGrant({
-      scope: params.scope,
-      redirectUri: params.redirect_uri,
-      resourceOwner: user,
-      codeChallenge: params.code_challenge,
-      codeChallengeMethod: params.code_challenge_method,
-    });
+    if (params.response_type === 'code') {
+      const access_grant = await oauthApplication.createAccessGrant({
+        scope: params.scope,
+        redirectUri: params.redirect_uri,
+        resourceOwner: user,
+        codeChallenge: params.code_challenge,
+        codeChallengeMethod: params.code_challenge_method,
+      });
 
-    if (access_grant.redirect_uri === 'urn:ietf:wg:oauth:2.0:oob') {
-      res.status(200).send(access_grant.token);
+      if (access_grant.redirect_uri === OAUTH_NATIVE_REDIRECT_URI) {
+        res.status(200).send(access_grant.token);
+      }
+      res.redirect(`${access_grant.redirect_uri}?code=${access_grant.token}`);
     }
-    res.redirect(`${access_grant.redirect_uri}?code=${access_grant.token}`);
+
+    if (params.response_type === 'token') {
+      const accessToken = await oauthApplication.createToken(params.scope);
+      const jwt = await encryptJWT(
+        appKeyPair.publicKey,
+        { token: accessToken.token },
+        '1h'
+      );
+
+      if (params.redirect_uri === OAUTH_NATIVE_REDIRECT_URI) {
+        res.status(200).send(jwt);
+      }
+      res.redirect(
+        `${
+          params.redirect_uri
+        }#access_token=${jwt}&token_type=bearer&expires_in=${3600}&scope=${
+          params.scope
+        }`
+      );
+    }
   } catch (e) {
     res.status(400).json({
       error: 'invalid_grant',

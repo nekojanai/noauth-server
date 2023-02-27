@@ -3,15 +3,13 @@ export interface AuthorizationParams {
   client_id: string;
   redirect_uri: string;
   scope: string;
-  // optional csrf token
-  state?: string;
   // optional PKCE
   code_challenge?: string;
   code_challenge_method?: string;
 }
 
 export function parseShowAuthorizationParams(params: any): AuthorizationParams {
-  if (params.response_type !== 'code') {
+  if (params.response_type !== 'code' || params.response_type !== 'token') {
     throw new Error('Invalid response_type');
   }
   if (!params.client_id) {
@@ -22,6 +20,13 @@ export function parseShowAuthorizationParams(params: any): AuthorizationParams {
   }
   if (!params.scope) {
     params.scope = 'read';
+  }
+  if (
+    params.code_challenge &&
+    params.code_challenge_method !== 'S256' &&
+    params.code_challenge_method !== 'plain'
+  ) {
+    throw new Error('Invalid code_challenge_method');
   }
   return params;
 }
@@ -40,13 +45,6 @@ export function parseNewAuthorizationParams(
   }
   if (!params.password) {
     throw new Error('Missing password');
-  }
-  if (
-    params.code_challenge &&
-    params.code_challenge_method !== 'S256' &&
-    params.code_challenge_method !== 'plain'
-  ) {
-    throw new Error('Invalid code_challenge_method');
   }
   return params;
 }
@@ -120,7 +118,8 @@ export function parseNewOauthTokenParams(params: any): NewOauthTokenParams {
   }
   if (
     params.grant_type === 'client_credentials' ||
-    params.grant_type === 'authorization_code'
+    params.grant_type === 'authorization_code' ||
+    params.grant_type === 'implicit'
   ) {
     if (!params.redirect_uri) {
       throw new Error('Missing redirect_uri');

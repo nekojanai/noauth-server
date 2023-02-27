@@ -2,10 +2,13 @@ import { OauthApplication } from '../models/oauth-application.model.js';
 import { OauthToken } from '../models/oauth-token.model.js';
 import { User } from '../models/user.model.js';
 import { validateScopes } from '../utils/oauth-scopes.js';
+import { OAUTH_NATIVE_REDIRECT_URI } from '../utils/oauth/redirect-uri.js';
 import { VALID_SCOPES } from './oauth/scope.helper.js';
 
 /**
- * redirect_uris: either one url (despite it's name) or the string 'urn:ietf:wg:oauth:2.0:oob'
+ * TODO: CHANGE THIS TO ACCEPT A LIST OF REDIRECT URIS
+ * redirect_uris: either one url (despite it's name) or the string defined
+ * in OAUTH_NATIVE_REDIRECT_URI
  */
 export interface OauthApplicationParams {
   client_name: string;
@@ -23,7 +26,7 @@ export function parseNewOauthApplicationParams(
     throw new Error('Missing client_name');
   }
   try {
-    if (params.redirect_uris !== 'urn:ietf:wg:oauth:2.0:oob') {
+    if (params.redirect_uris !== OAUTH_NATIVE_REDIRECT_URI) {
       new URL(params.redirect_uris);
     }
   } catch (e) {

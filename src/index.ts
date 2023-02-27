@@ -8,6 +8,7 @@ import { checkForDBEnvVars, db } from './config/db.js';
 import { checkForKeyPairEnvVars, initiateKeyPair } from './config/keypair.js';
 import { engine } from 'express-handlebars';
 import { rotateSecret, RotatingSecret } from './utils/crypto.js';
+import { initOauthConfig } from './config/oauth.js';
 
 loadEnvVars();
 
@@ -34,6 +35,7 @@ switch (ENVIRONMENT) {
 checkForDBEnvVars();
 checkForKeyPairEnvVars();
 
+export const appOauthConfig = initOauthConfig();
 db(false).initialize();
 export const appKeyPair = await initiateKeyPair(
   process.env.KEY_PAIR_PATH,
