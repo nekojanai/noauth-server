@@ -1,64 +1,51 @@
-import { Request, Response } from "express";
-import { AuthorizationParams, parseNewAuthorizationParams, parseRevokeTokenParams, parseShowAuthorizationParams } from "../helpers/oauth.helper.js";
-import { appRotateSecret, keyPair } from "../index.js";
-import { OauthAccessGrant } from "../models/oauth_access_grant.model.js";
-import { OauthApplication } from "../models/oauth_application.model.js";
-import { OauthToken } from "../models/oauth_token.model.js";
-import { User } from "../models/user.model.js";
-import { OauthTokenParams } from "../services/oauth-application.service.js";
-import { createJWT } from "../utils/crypto.js";
+import { Request, Response } from 'express';
+import {
+  handleAuthorizationCodeFlow,
+  handleClientCredentialsFlow,
+  handlePasswordFlow,
+  handleRefreshTokenFlow,
+} from '../helpers/oauth/grant-flows.helper.js';
+import {
+  AuthorizationParams,
+  IntrospectTokenParams,
+  parseIntrospectTokenParams,
+  parseNewAuthorizationParams,
+  parseNewOauthTokenParams,
+  parseRevokeTokenParams,
+  parseShowAuthorizationParams,
+} from '../helpers/oauth/params.helper.js';
+import { appKeyPair, appRotateSecret } from '../index.js';
+import { OauthApplication } from '../models/oauth_application.model.js';
+import { OauthToken } from '../models/oauth_token.model.js';
+import { User } from '../models/user.model.js';
+import { decryptJWT } from '../utils/crypto.js';
 
-
-export async function newTokenHandler(req: Request, res: Response): Promise<void> {
-  const params: OauthTokenParams = req.body.fields;
+export async function newTokenHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    if (params.grant_type === 'authorization_code') {
+    const params = parseNewOauthTokenParams(req.body.fields);
 
-      if (!params.code) {
-        throw new Error('invalid code');
-      }
-
-      const oauthApplication = await OauthApplication.findOne({
-        where: {
-          uid: params.client_id
-        }
-      });
-
-      if (!oauthApplication) {
-        throw new Error('invalid client_id');
-      }
-      if (oauthApplication.secret !== params.client_secret) {
-        throw new Error('invalid client_secret');
-      }
-      const oauthAccessGrant = await OauthAccessGrant.findOne({
-        where: {
-          token: params.code
-        }
-      })
-      if (!oauthAccessGrant) {
-        throw new Error('invalid code');
-      }
-      if (oauthAccessGrant.redirect_uri !== params.redirect_uri) {
-        throw new Error('invalid redirect_uri');
-      }
-      if (oauthAccessGrant.scopes !== params.scope) {
-        throw new Error('invalid scope');
-      }
-
-      const accessToken = await oauthApplication.createToken(params.scope, oauthAccessGrant.resource_owner);
-      const { privateKey } = keyPair;
-      res.status(200).json({
-        access_token: createJWT(privateKey, accessToken),
-        token_type: 'Bearer',
-        scope: oauthAccessGrant.scopes,
-        created_at: accessToken.createdAt.getTime()
-      });
-    } else {
-      throw new Error('invalid grant_type');
+    switch (params.grant_type) {
+      case 'authorization_code':
+        await handleAuthorizationCodeFlow(params, res);
+        break;
+      case 'client_credentials':
+        await handleClientCredentialsFlow(params, res);
+        break;
+      case 'refresh_token':
+        await handleRefreshTokenFlow(params, res);
+        break;
+      case 'password':
+        await handlePasswordFlow(params, res);
+        break;
+      default:
+        break;
     }
   } catch (e) {
     res.status(400).json({
-      error: e.message
+      error: e.message,
     });
   }
 }
@@ -67,23 +54,26 @@ export function showAuthorizeHandler(req: Request, res: Response): void {
   let queryParams: AuthorizationParams;
   try {
     queryParams = parseShowAuthorizationParams(req.query);
+    const csrf = appRotateSecret();
+    res.render('authorize', { title: 'Auth', csrf, queryParams });
   } catch (e) {
     res.status(422).json({
-      error: e.message
+      error: e.message,
     });
   }
-  const csrf = appRotateSecret();
-  res.render('authorize', { title: 'SubAbu', csrf, queryParams });
 }
 
-export async function newAuthorizationHandler(req: Request, res: Response): Promise<void> {
+export async function newAuthorizationHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const params = parseNewAuthorizationParams(req.body.fields);
 
     const oauthApplication = await OauthApplication.findOne({
       where: {
-        uid: params.client_id
-      }
+        uid: params.client_id,
+      },
     });
 
     if (!oauthApplication) {
@@ -91,10 +81,7 @@ export async function newAuthorizationHandler(req: Request, res: Response): Prom
     }
 
     const user = await User.findOne({
-      where: [
-        { username: params.username },
-        { email: params.username }
-      ]
+      where: [{ username: params.username }, { email: params.username }],
     });
 
     if (!user) {
@@ -105,7 +92,13 @@ export async function newAuthorizationHandler(req: Request, res: Response): Prom
       throw new Error('invalid password');
     }
 
-    const access_grant = await oauthApplication.createAccessGrant(params.scope, params.redirect_uri, user);
+    const access_grant = await oauthApplication.createAccessGrant({
+      scope: params.scope,
+      redirectUri: params.redirect_uri,
+      resourceOwner: user,
+      codeChallenge: params.code_challenge,
+      codeChallengeMethod: params.code_challenge_method,
+    });
 
     if (access_grant.redirect_uri === 'urn:ietf:wg:oauth:2.0:oob') {
       res.status(200).send(access_grant.token);
@@ -113,19 +106,22 @@ export async function newAuthorizationHandler(req: Request, res: Response): Prom
     res.redirect(`${access_grant.redirect_uri}?code=${access_grant.token}`);
   } catch (e) {
     res.status(400).json({
-      error: "invalid_grant"
+      error: 'invalid_grant',
     });
   }
 }
 
-export async function revokeTokenHandler(req: Request, res: Response): Promise<void> {
+export async function revokeTokenHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const params = parseRevokeTokenParams(req.body.fields);
 
     const oauthToken = await OauthToken.findOne({
       where: {
-        token: params.token
-      }
+        token: params.token,
+      },
     });
 
     if (!oauthToken) {
@@ -146,8 +142,37 @@ export async function revokeTokenHandler(req: Request, res: Response): Promise<v
     res.status(200).json({});
   } catch (e) {
     res.status(403).json({
-      error: 'unauthorized_client'
+      error: 'unauthorized_client',
     });
   }
 }
 
+export async function introspectTokenHandler(req: Request, res: Response) {
+  try {
+    const params = parseIntrospectTokenParams(req.body.fields);
+
+    const { payload } = await decryptJWT(params.token, appKeyPair.privateKey);
+
+    const oauthToken = await OauthToken.findOne({
+      where: {
+        token: payload.token as string,
+      },
+    });
+
+    if (!oauthToken) {
+      throw new Error('invalid token');
+    }
+
+    if (req.context.currentApplication !== oauthToken.application) {
+      throw new Error('token was issued for another application');
+    }
+
+    res.status(200).json({
+      active: true,
+    });
+  } catch (e) {
+    res.status(200).json({
+      active: false,
+    });
+  }
+}

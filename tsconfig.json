@@ -15,14 +15,14 @@
     "noLib": false,
     "skipLibCheck": true,
     "lib": [
-      "esnext"
+      "esnext",
     ],
     "types": [
       "node"
     ],
     "typeRoots": [
       "./node_modules/@types",
-      "./src/@types"
+      "./src/@types",
     ],
   },
   "ts-node": {
@@ -30,9 +30,12 @@
     "esm": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
   ],
   "exclude": [
     "node_modules"
+  ],
+  "files": [
+    "src/utils/custom.d.ts"
   ]
 }

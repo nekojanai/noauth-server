@@ -8,15 +8,15 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm";
-import type { Relation } from "typeorm";
-import { hashPassword, verifyPassword } from "../utils/crypto.js";
-import { OauthToken } from "./oauth_token.model.js";
-import { OauthAccessGrant } from "./oauth_access_grant.model.js";
+} from 'typeorm';
+import type { Relation } from 'typeorm';
+import { hashPassword, verifyPassword } from '../utils/crypto.js';
+import { OauthToken } from './oauth_token.model.js';
+import { OauthAccessGrant } from './oauth_access_grant.model.js';
 
 @Entity()
 export class User extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @CreateDateColumn()
@@ -42,10 +42,13 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @OneToMany(() => OauthToken, token => token.resource_owner)
+  @OneToMany(() => OauthToken, (token) => token.resource_owner)
   tokens: Relation<OauthToken[]>;
 
-  @OneToMany(() => OauthAccessGrant, access_grant => access_grant.resource_owner)
+  @OneToMany(
+    () => OauthAccessGrant,
+    (access_grant) => access_grant.resource_owner
+  )
   access_grants: Relation<OauthAccessGrant[]>;
 
   @BeforeInsert()

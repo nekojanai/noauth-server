@@ -1,6 +1,6 @@
 body {
   background-color: #f0f0f0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.42857143;
   color: #333;
@@ -13,7 +13,7 @@ body {
   max-width: fit-content;
 }
 
-.auth-form>input[type="submit"] {
+.auth-form > input[type='submit'] {
   margin-top: 10px;
   background-color: dimgray;
   color: white;

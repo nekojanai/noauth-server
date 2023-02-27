@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
 export function baseHandler(_: Request, res: Response) {
-  res.render('index', { title: 'SubAbu' });
+  res.render('index', { title: 'Auth' });
 }

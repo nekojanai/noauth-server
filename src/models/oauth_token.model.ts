@@ -1,12 +1,23 @@
-import { BaseEntity, BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import type { Relation } from "typeorm";
-import { OauthApplication } from "./oauth_application.model.js";
-import { User } from "./user.model.js";
-import { generateToken } from "../utils/crypto.js";
+import {
+  BaseEntity,
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import type { Relation } from 'typeorm';
+import { OauthApplication } from './oauth_application.model.js';
+import { User } from './user.model.js';
+import { generateToken } from '../utils/crypto.js';
 
 @Entity()
 export class OauthToken extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @CreateDateColumn()
@@ -25,10 +36,10 @@ export class OauthToken extends BaseEntity {
   @Column()
   scope: string = 'read';
 
-  @ManyToOne(() => User, user => user.tokens)
+  @ManyToOne(() => User, (user) => user.tokens)
   resource_owner: Relation<User>;
 
-  @ManyToOne(() => OauthApplication, application => application.tokens)
+  @ManyToOne(() => OauthApplication, (application) => application.tokens)
   application: Relation<OauthApplication>;
 
   @BeforeInsert()

@@ -1,12 +1,22 @@
-import { BaseEntity, BeforeInsert, Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import type { Relation } from "typeorm";
-import { User } from "./user.model.js";
-import { OauthApplication } from "./oauth_application.model.js";
-import { generateToken } from "../utils/crypto.js";
+import {
+  BaseEntity,
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import type { Relation } from 'typeorm';
+import { User } from './user.model.js';
+import { OauthApplication } from './oauth_application.model.js';
+import { generateToken } from '../utils/crypto.js';
 
 @Entity()
 export class OauthAccessGrant extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @CreateDateColumn()
@@ -19,10 +29,16 @@ export class OauthAccessGrant extends BaseEntity {
   @Index({ unique: true })
   token: string;
 
-  @ManyToOne(() => User, user => user.access_grants)
+  @Column({ nullable: true })
+  code_challenge: string;
+
+  @Column({ nullable: true })
+  code_challenge_method: string;
+
+  @ManyToOne(() => User, (user) => user.access_grants)
   resource_owner: Relation<User>;
 
-  @ManyToOne(() => OauthApplication, application => application.access_grants)
+  @ManyToOne(() => OauthApplication, (application) => application.access_grants)
   application: Relation<OauthApplication>;
 
   @Column()
@@ -32,7 +48,7 @@ export class OauthAccessGrant extends BaseEntity {
   expires_in: number;
 
   @Column()
-  scopes: string = 'read';
+  scope: string = 'read';
 
   @BeforeInsert()
   private genToken() {

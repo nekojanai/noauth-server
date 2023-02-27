@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword } from "../utils/crypto.js";
+import { hashPassword, verifyPassword } from '../utils/crypto.js';
 
 const hashString = await hashPassword('meow meow');
 const isValid = await verifyPassword('meow meow', hashString);

@@ -1,14 +1,24 @@
-import { BaseEntity, BeforeInsert, Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import type { Relation } from "typeorm";
-import { generateToken } from "../utils/crypto.js";
-import { OauthToken } from "./oauth_token.model.js";
-import { scopesMatch } from "../services/oauth-scopes.js";
-import { User } from "./user.model.js";
-import { OauthAccessGrant } from "./oauth_access_grant.model.js";
+import {
+  BaseEntity,
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import type { Relation } from 'typeorm';
+import { generateToken } from '../utils/crypto.js';
+import { OauthToken } from './oauth_token.model.js';
+import { scopesMatch } from '../utils/oauth-scopes.js';
+import { User } from './user.model.js';
+import { OauthAccessGrant } from './oauth_access_grant.model.js';
 
 @Entity()
 export class OauthApplication extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @CreateDateColumn()
@@ -31,20 +41,28 @@ export class OauthApplication extends BaseEntity {
   redirect_uri: string;
 
   @Column()
-  scopes: string = 'read';
+  scope: string = 'read';
 
   @Column()
   website: string = '';
 
-  @OneToMany(() => OauthToken, token => token.application)
+  @OneToMany(() => OauthToken, (token) => token.application)
   tokens: Relation<OauthToken[]>;
 
-  @OneToMany(() => OauthAccessGrant, access_grant => access_grant.application)
+  @OneToMany(() => OauthAccessGrant, (access_grant) => access_grant.application)
   access_grants: Relation<OauthAccessGrant[]>;
 
-  async createAccessGrant(scope: string, redirectUri: string, resourceOwner: User): Promise<OauthAccessGrant> {
-
-    if (scopesMatch(this.scopes, scope) === false) {
+  async createAccessGrant(
+    arguements: CreateAccessGrantArguments
+  ): Promise<OauthAccessGrant> {
+    const {
+      scope,
+      resourceOwner,
+      redirectUri,
+      codeChallenge,
+      codeChallengeMethod,
+    } = arguements;
+    if (scopesMatch(this.scope, scope) === false) {
       throw new Error('Requested scope is not allowed');
     }
 
@@ -57,17 +75,25 @@ export class OauthApplication extends BaseEntity {
     }
 
     const accessGrant = OauthAccessGrant.create();
+
+    if (codeChallenge) {
+      if (codeChallengeMethod !== 'plain' && codeChallengeMethod !== 'S256') {
+        throw new Error('invalid code_challenge_method');
+      }
+      accessGrant.code_challenge = codeChallenge;
+      accessGrant.code_challenge_method = codeChallengeMethod;
+    }
+
     accessGrant.resource_owner = resourceOwner;
     accessGrant.application = this;
     accessGrant.redirect_uri = this.redirect_uri;
-    accessGrant.scopes = scope;
+    accessGrant.scope = scope;
     const savedAccessGrant = await accessGrant.save();
     return savedAccessGrant;
   }
 
   async createToken(scope: string, resourceOwner?: User): Promise<OauthToken> {
-
-    if (scopesMatch(this.scopes, scope) === false) {
+    if (scopesMatch(this.scope, scope) === false) {
       throw new Error('Requested scope is not allowed');
     }
 
@@ -88,4 +114,12 @@ export class OauthApplication extends BaseEntity {
     this.uid = generateToken();
     this.secret = generateToken();
   }
+}
+
+export interface CreateAccessGrantArguments {
+  scope: string;
+  redirectUri: string;
+  resourceOwner: User;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
 }

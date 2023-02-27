@@ -1,30 +1,37 @@
-import { readFile, writeFile } from "fs/promises";
-import { generateKeys } from "../utils/crypto.js";
+import {
+  decodeKeyPair,
+  encodeKeyPair,
+  generateKeys,
+  KeyPair,
+  readKeyPairFromDisk,
+  writeKeyPairToDisk,
+} from '../utils/crypto.js';
 
-export interface KeyPair {
-  publicKey: string;
-  privateKey: string;
+export function checkForKeyPairEnvVars(): void {
+  if (!process.env.PRIVATE_KEY_PASSPHRASE || !process.env.KEY_PAIR_PATH) {
+    console.error('PRIVATE_KEY_PASSPHRASE and KEY_PAIR_PATH env vars not set!');
+    process.exit(1);
+  }
 }
 
-export async function initiateKeyPair(privateKeyPassphrase: string): Promise<KeyPair> {
-  console.log('Initiating key pair');
-  let existingPrivateKey: string, existingPublicKey: string;
+export async function initiateKeyPair(
+  pathToKeyPair: string,
+  privateKeyPassphrase: string
+): Promise<KeyPair> {
+  console.log('[ENCRYPTION] initiating key pair...');
+
   try {
-    existingPublicKey = await readFile('src/config/public.key', 'utf8');
-    existingPrivateKey = await readFile('src/config/private.key', 'utf8');
-    console.log('Using existing key pair');
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      console.log('Generating new key pair');
-      const keyPair = await generateKeys(privateKeyPassphrase);
-      await writeFile('src/config/public.key', keyPair.publicKey);
-      await writeFile('src/config/private.key', keyPair.privateKey);
-      existingPrivateKey = keyPair.privateKey;
-      existingPublicKey = keyPair.publicKey;
-    }
-  }
-  return {
-    publicKey: existingPublicKey,
-    privateKey: existingPrivateKey
+    const keyPair = await readKeyPairFromDisk(pathToKeyPair);
+    const decodedKeyPair = decodeKeyPair(keyPair, privateKeyPassphrase);
+    console.log('[ENCRYPTION] using existing key pair.');
+    return decodedKeyPair;
+  } catch {
+    console.log('[ENCRYPTION] generating new key pair...');
+    const keyPair = await generateKeys();
+    console.log('[ENCRYPTION] peristing key pair to disk...');
+    const encodedKeyPair = encodeKeyPair(keyPair, privateKeyPassphrase);
+    await writeKeyPairToDisk(pathToKeyPair, encodedKeyPair);
+    console.log('[ENCRYPTION] using new key pair.');
+    return keyPair;
   }
 }
