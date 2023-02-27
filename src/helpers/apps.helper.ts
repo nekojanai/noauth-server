@@ -1,7 +1,8 @@
-import { OauthApplication } from '../models/oauth_application.model.js';
-import { OauthToken } from '../models/oauth_token.model.js';
+import { OauthApplication } from '../models/oauth-application.model.js';
+import { OauthToken } from '../models/oauth-token.model.js';
 import { User } from '../models/user.model.js';
 import { validateScopes } from '../utils/oauth-scopes.js';
+import { VALID_SCOPES } from './oauth/scope.helper.js';
 
 /**
  * redirect_uris: either one url (despite it's name) or the string 'urn:ietf:wg:oauth:2.0:oob'
@@ -28,7 +29,7 @@ export function parseNewOauthApplicationParams(
   } catch (e) {
     throw new Error('invalid redirect_uris');
   }
-  if (!validateScopes(params.scopes)) {
+  if (!validateScopes(params.scopes, VALID_SCOPES)) {
     throw new Error('invalid scopes');
   }
   if (params.website) {

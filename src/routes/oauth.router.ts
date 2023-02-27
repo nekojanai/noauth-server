@@ -6,8 +6,8 @@ import {
   revokeTokenHandler,
   showAuthorizeHandler,
 } from '../controllers/oauth.controller.js';
-import { parseFormData } from '../middleware/form-data.js';
-import { isAdmin, setAuthContext } from '../middleware/jwt.js';
+import { parseFormData } from '../middleware/form-data.middleware.js';
+import { isAdmin, setAuthContext } from '../middleware/auth.middleware.js';
 
 export const oauthRouter = Router();
 

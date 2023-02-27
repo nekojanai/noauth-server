@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { appKeyPair } from '../index.js';
-import { OauthToken } from '../models/oauth_token.model.js';
+import { OauthToken } from '../models/oauth-token.model.js';
 import { decryptJWT } from '../utils/crypto.js';
 
 export async function setAuthContext(

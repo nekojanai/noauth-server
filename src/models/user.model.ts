@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { hashPassword, verifyPassword } from '../utils/crypto.js';
-import { OauthToken } from './oauth_token.model.js';
-import { OauthAccessGrant } from './oauth_access_grant.model.js';
+import { OauthToken } from './oauth-token.model.js';
+import { OauthAccessGrant } from './oauth-access-grant.model.js';
 
 @Entity()
 export class User extends BaseEntity {

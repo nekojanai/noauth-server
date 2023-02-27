@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { parseNewOauthApplicationParams } from '../helpers/apps.helper.js';
-import { OauthApplication } from '../models/oauth_application.model.js';
+import { OauthApplication } from '../models/oauth-application.model.js';
 
 export async function newAppHandler(req: Request, res: Response) {
   try {

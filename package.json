@@ -1,7 +1,7 @@
 {
-  "name": "noauth-backend",
+  "name": "noauth-server",
   "version": "0.0.0",
-  "description": "The NoAuth backend.",
+  "description": "The NoAuth server.",
   "scripts": {
     "clean": "rm -rf ./dist",
     "build": "npm run clean && tsc",

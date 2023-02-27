@@ -15,8 +15,8 @@ import {
   parseShowAuthorizationParams,
 } from '../helpers/oauth/params.helper.js';
 import { appKeyPair, appRotateSecret } from '../index.js';
-import { OauthApplication } from '../models/oauth_application.model.js';
-import { OauthToken } from '../models/oauth_token.model.js';
+import { OauthApplication } from '../models/oauth-application.model.js';
+import { OauthToken } from '../models/oauth-token.model.js';
 import { User } from '../models/user.model.js';
 import { decryptJWT } from '../utils/crypto.js';
 

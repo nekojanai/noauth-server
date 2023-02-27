@@ -1,5 +1,5 @@
 import { appKeyPair } from '../../index.js';
-import { OauthToken } from '../../models/oauth_token.model.js';
+import { OauthToken } from '../../models/oauth-token.model.js';
 import { encryptJWT } from '../../utils/crypto.js';
 
 export interface TokenResponseObject {

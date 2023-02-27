@@ -1,15 +1,7 @@
-export const VALID_SCOPES = [
-  'read',
-  'write',
-  'admin',
-  'admin:read',
-  'admin:write',
-];
-
-export function validateScopes(scopes: string): boolean {
+export function validateScopes(scopes: string, validScopes: string[]): boolean {
   return scopes
     .split(detectDelimiter(scopes))
-    .every((e) => VALID_SCOPES.includes(e));
+    .every((e) => validScopes.includes(e));
 }
 
 export function scopesMatch(scopes: string, requiredScopes: string): boolean {

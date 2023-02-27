@@ -11,10 +11,10 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { generateToken } from '../utils/crypto.js';
-import { OauthToken } from './oauth_token.model.js';
+import { OauthToken } from './oauth-token.model.js';
 import { scopesMatch } from '../utils/oauth-scopes.js';
 import { User } from './user.model.js';
-import { OauthAccessGrant } from './oauth_access_grant.model.js';
+import { OauthAccessGrant } from './oauth-access-grant.model.js';
 
 @Entity()
 export class OauthApplication extends BaseEntity {

@@ -1,8 +1,8 @@
 import { Response } from 'express';
 import { appKeyPair } from '../../index.js';
-import { OauthAccessGrant } from '../../models/oauth_access_grant.model.js';
-import { OauthApplication } from '../../models/oauth_application.model.js';
-import { OauthToken } from '../../models/oauth_token.model.js';
+import { OauthAccessGrant } from '../../models/oauth-access-grant.model.js';
+import { OauthApplication } from '../../models/oauth-application.model.js';
+import { OauthToken } from '../../models/oauth-token.model.js';
 import { User } from '../../models/user.model.js';
 import { decryptJWT, makeURLSafeBase64Hash } from '../../utils/crypto.js';
 import { scopesMatch } from '../../utils/oauth-scopes.js';
